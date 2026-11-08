@@ -194,6 +194,35 @@ windres -i app.rc -o rsrc.syso -O coff --target=pe-x86-64
 
 测试：`go test ./...`（domain / persistence / plugin / componentapp / 结构体布局）。
 
+### 发版（GitHub Actions）
+
+`.github/workflows/release.yml` 负责出 Release。**推一个 `v*` 的 tag 就够**：
+
+```bash
+git tag -a v0.2 -m "v0.2"
+git push origin v0.2
+```
+
+流水线在 `windows-latest` 上跑：装 Go（版本取自 `go.mod`）→ 用 MSYS2 装 MinGW-w64
+（cgo 要编 `wrap.cpp`）→ `go vet` + `go test` → 构建 → 组装 `dist\` → 打 zip →
+`gh release create` 建 Release 并附上资产。
+
+产物 `StickyNote-<tag>-windows-x64.zip` 里是：
+
+```
+StickyNote.exe  WebView2Loader.dll  bundles\  LICENSE  THIRD-PARTY-NOTICES.md  WebView2-SDK-LICENSE.txt
+```
+
+几条刻意的安排：
+
+- **推 `main` 也会跑**（只到「上传构建产物」为止，不建 Release）。目的是让编译错误在
+  打 tag 之前暴露，而不是在发版当天。
+- **tag 名带 `-` 判为预发布**（如 `v0.2-beta1` → `--prerelease`）。
+- **同一个 tag 重跑不会失败**：已有 Release 时走 `gh release upload --clobber` 覆盖资产。
+- **打包后会校验 zip 内容**：缺 `StickyNote.exe` / `WebView2Loader.dll` /
+  `bundles/note/manifest.json` / `LICENSE` 任一项就报错退出——少一样用户下下来就是废的。
+- 用 runner 自带的 `gh` 建 Release，不引第三方 action。
+
 ---
 
 ## 数据布局（便携模式）

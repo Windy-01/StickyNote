@@ -1,0 +1,135 @@
+name: 构建与发布
+
+# 推 tag 就出 Release；推 main 只验证能不能编译（早发现比打完 tag 才发现好）。
+on:
+  push:
+    tags: ['v*']
+    branches: [main]
+  workflow_dispatch:
+
+# gh release create 要写仓库的 releases
+permissions:
+  contents: write
+
+# 同一分支/tag 上的重复触发排队，不并发跑两次
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - name: 检出
+        uses: actions/checkout@v4
+
+      - name: 安装 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # 宿主用 cgo 编译 wrap.cpp（WebView2 Composition 的 C++ 层），
+      # 所以必须有一个能编 C++17 的 gcc。runner 自带的 MinGW 版本不稳定，
+      # 用 MSYS2 装一份，后面把 C:\msys64\mingw64\bin 塞进 PATH。
+      - name: 安装 MinGW-w64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: false
+          install: mingw-w64-x86_64-gcc
+
+      - name: 把 gcc 加进 PATH
+        shell: pwsh
+        run: Add-Content -Path $env:GITHUB_PATH -Value 'C:\msys64\mingw64\bin'
+
+      - name: 检查工具链
+        shell: pwsh
+        run: |
+          gcc --version | Select-Object -First 1
+          g++ --version | Select-Object -First 1
+          go version
+          "CGO_ENABLED = $(go env CGO_ENABLED)"
+
+      - name: 静态检查与测试
+        shell: pwsh
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: 构建
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          # -s -w 不能省：不带的话 mingw ld 会给可丢弃调试节区写一个非法地址，
+          # Windows 判定镜像非法，双击没反应（本地踩过）。
+          go build -ldflags "-H windowsgui -s -w" -o dist/StickyNote.exe ./cmd/stickynote
+          if ($LASTEXITCODE -ne 0) { throw "go build 失败" }
+
+          $exe = Get-Item dist/StickyNote.exe
+          "{0}  {1:N0} 字节" -f $exe.Name, $exe.Length
+          if ($exe.Length -lt 1MB) { throw "exe 只有 $($exe.Length) 字节，明显不对" }
+
+      - name: 组装分发目录
+        shell: pwsh
+        run: |
+          # 运行时依赖：加载器 dll 与预置插件都得跟 exe 放一起
+          Copy-Item third_party/webview2/x64/WebView2Loader.dll dist/
+          Copy-Item -Recurse bundles dist/bundles
+
+          # 三份许可证：MIT 与两份 BSD-3 都要求随二进制附带声明
+          Copy-Item LICENSE dist/
+          Copy-Item THIRD-PARTY-NOTICES.md dist/
+          Copy-Item third_party/webview2/LICENSE dist/WebView2-SDK-LICENSE.txt
+
+          Get-ChildItem -Recurse dist | Select-Object FullName, Length
+
+      - name: 定版本号并打包
+        shell: pwsh
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { $env:GITHUB_SHA.Substring(0,7) }
+          $zip = "StickyNote-$v-windows-x64.zip"
+          Compress-Archive -Path dist/* -DestinationPath $zip -Force
+
+          "{0}  {1:N0} 字节" -f $zip, (Get-Item $zip).Length
+          # 包里必须有 bundles，否则用户下下来只有空桌面
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $z = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+          try {
+            # Compress-Archive 的分隔符在 PS5/PS7 上不一致，统一成正斜杠再比
+            $names = $z.Entries.FullName | ForEach-Object { $_ -replace '\\', '/' }
+          } finally { $z.Dispose() }
+          foreach ($must in @('StickyNote.exe','WebView2Loader.dll','bundles/note/manifest.json','LICENSE')) {
+            if ($names -notcontains $must) { throw "包里缺 $must" }
+          }
+
+          Add-Content -Path $env:GITHUB_ENV -Value "VERSION=$v"
+          Add-Content -Path $env:GITHUB_ENV -Value "ZIP=$zip"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: StickyNote-${{ env.VERSION }}-windows-x64
+          path: ${{ env.ZIP }}
+          if-no-files-found: error
+
+      - name: 发布 Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          # 用数组传参，不要用 "$pre = ''" 这种空字符串占位——
+          # 空参数会被当成多余的位置参数，gh 直接报错
+          $ghArgs = @($tag, $env:ZIP, '--title', "StickyNote $tag", '--generate-notes')
+          if ($tag -match '-') { $ghArgs += '--prerelease' }
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            # 同一个 tag 重跑：覆盖资产，不新建 release
+            gh release upload $tag $env:ZIP --clobber
+          } else {
+            gh release create @ghArgs
+          }

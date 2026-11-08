@@ -1,5 +1,6 @@
 # Go 构建产物
 bin/
+dist/
 *.exe
 *.syso.bak
 

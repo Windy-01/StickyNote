@@ -1,0 +1,76 @@
+/* ---------------------------------------------------------------------------
+   测试弹幕
+   窗口外观（底色、留白、滚动速度）全部来自内置样式「悬浮提示栏」注入的
+   --sn-* 变量；这里只决定"一行字怎么滚"。
+
+   【重写说明】按 cmd/cssprobe 的实测结论重写：
+   - translateX()/translateY() 不生效，位移必须用 translate(x, y)；
+   - 父级 align-items 不生效，垂直居中写在子元素上；
+   - -webkit-mask-image 不在支持范围内，两端的淡出效果去掉。
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* 兜底值：单独在浏览器里打开时的样子 */
+  --sn-background: transparent;
+  --sn-radius: 0px;
+  --sn-shadow: none;
+  --sn-toast-ink: #f5f5f7;
+  --sn-toast-ink-soft: #8e8e96;
+  --sn-toast-accent: #7fd1ff;
+  --sn-toast-speed: 18s;
+  --sn-toast-gap: 140px;
+}
+
+body {
+  /* 底色来自样式包，现在是 transparent——文字直接浮在下面的窗口/壁纸上。
+     正因为底下什么都可能，字色才要保持高对比（--sn-toast-ink）。 */
+  background: var(--sn-background);
+  color: var(--sn-toast-ink);
+  font-family: "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  /* 窗口是点击穿透的：鼠标事件根本不会进到页面里，
+     所以这里没有 cursor: move，也没有拖动入口。 */
+}
+
+.danmaku {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 轨道起点在容器右边界外（left:100%），所以第一份文字从右边进来。
+   轨道宽度 = 两份完全相同的文字，因此 translate(-50%,0) 恰好是一份的宽度：
+   动画跑完时第二份正好顶到第一份的起始位置，接得上，看不出接缝。
+   ——不需要用 JS 去量文字宽度。 */
+.danmaku__track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  display: flex;
+  animation: danmaku-scroll var(--sn-toast-speed) linear infinite;
+}
+
+.danmaku__item {
+  flex: 0 0 auto;
+  /* 垂直居中写在子元素上：轨道是 flex 行，子元素自己对齐最直观。 */
+  align-self: center;
+  padding-right: var(--sn-toast-gap);
+  white-space: nowrap;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+/* 不做 prefers-reduced-motion 降级：弹幕的全部意义就是动，关掉等于关掉组件。
+   也不做 hover 暂停：窗口是点击穿透的，hover 永远不会发生。 */
+
+@keyframes danmaku-scroll {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}

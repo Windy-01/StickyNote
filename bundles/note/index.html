@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>便签</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="note">
+  <header class="titlebar" id="titlebar">
+    <span class="titlebar__dot" id="dot" data-state="idle"></span>
+    <span class="titlebar__brand" id="brand">便签</span>
+    <span class="titlebar__status" id="status">已就绪</span>
+    <div class="titlebar__actions">
+      <button type="button" class="tb-btn tb-btn--close" id="close" title="关闭">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2"/></svg>
+      </button>
+    </div>
+  </header>
+  <textarea id="editor" class="note__editor" placeholder="写点什么…" spellcheck="false" autocomplete="off"></textarea>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

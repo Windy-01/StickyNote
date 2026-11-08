@@ -1,0 +1,1590 @@
+/* ---------------------------------------------------------------------------
+   管理界面样式
+
+   这是内核自己的 UI，不走任何组，但仍消费同一套 --sn-* 变量：宿主在文档
+   创建时注入，这里只给兜底值。
+
+   布局：左侧「组」（组件挂在组下面）+ 右侧「桌面布局板」（主页面）+ 底部
+   状态栏；组设置与组件设置走右侧抽屉。
+
+   底色画在 .shell 上而不是 body：内核基座样式把 html 设成透明，
+   body 的背景会传播到画布上，圆角就管不住了。
+   --------------------------------------------------------------------------- */
+
+:root {
+  --sn-ink: #2b2823;
+  --sn-ink-soft: #7d766a;
+  --sn-line: rgba(0, 0, 0, 0.08);
+  --sn-hover: rgba(0, 0, 0, 0.045);
+  --sn-accent: #c08a1e;
+  --sn-accent-dark: #a97613;
+  --sn-accent-soft: #f7ecd2;
+  --sn-accent-ink: #7d5a0c;
+  --sn-danger: #c4302b;
+  --sn-ok: #3f9a5a;
+  --sn-background: #f7f5f1;
+  --sn-surface: #ffffff;
+  --sn-surface-2: #efece5;
+  --sn-radius: 10px;
+}
+
+/* 盒模型、html/body 的 margin 与 100% 高链由内核基座样式（baseCSS）提供。 */
+
+body {
+  font-family: "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--sn-ink);
+  overflow: hidden;
+  user-select: none;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* ---------------------------------------------------------------------------
+   骨架
+   --------------------------------------------------------------------------- */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--sn-background);
+  border-radius: var(--sn-radius);
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   标题栏
+   --------------------------------------------------------------------------- */
+
+.titlebar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 6px 0 14px;
+  border-bottom: 1px solid var(--sn-line);
+  background: linear-gradient(#fbfaf7, #f4f1ea);
+}
+
+.titlebar__mark {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--sn-accent);
+  box-shadow: 0 0 0 3px var(--sn-accent-soft);
+}
+
+.titlebar__title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.titlebar__hint {
+  font-size: 11px;
+  color: var(--sn-ink-soft);
+}
+
+.titlebar__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.tb-btn {
+  width: 32px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  cursor: default;
+}
+
+.tb-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.tb-btn:hover {
+  background: var(--sn-hover);
+  color: var(--sn-ink);
+}
+
+.tb-btn--close:hover {
+  background: var(--sn-danger);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------------------
+   侧边栏（组 + 组内组件）
+   --------------------------------------------------------------------------- */
+
+.sidebar {
+  flex: none;
+  width: 268px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--sn-line);
+  background: var(--sn-surface-2);
+}
+
+.sidebar__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 10px 8px 14px;
+}
+
+.sidebar__title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--sn-ink-soft);
+}
+
+.sidebar__head .btn {
+  margin-left: auto;
+}
+
+.sidebar__list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+}
+
+.sidebar__foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--sn-line);
+}
+
+/* --- 组卡片 ------------------------------------------------------------- */
+
+.group {
+  flex: none;
+  border: 1px solid var(--sn-line);
+  border-radius: 8px;
+  background: var(--sn-surface);
+  overflow: hidden;
+}
+
+.group.is-active {
+  border-color: var(--g, var(--sn-accent));
+  box-shadow: 0 0 0 1px var(--sn-accent-soft);
+}
+
+.group__head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 4px 7px 6px;
+}
+
+.group__head:hover {
+  background: var(--sn-hover);
+}
+
+/* 折叠箭头：它和组头是两种操作（折叠 vs 只看这个组），所以各自是一个按钮。 */
+.group__chev {
+  flex: none;
+  width: 14px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  cursor: default;
+}
+
+.group__chev svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.12s ease;
+}
+
+.group__chev.is-collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.group__chev:hover {
+  background: var(--sn-hover);
+  color: var(--sn-ink);
+}
+
+/* 组的识别色：一个圆点。布局板上的方块用同一个颜色，两边对得上。 */
+.group__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--g, #cfc9bd);
+}
+
+.group__gear {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+  cursor: default;
+  opacity: 0;
+}
+
+.group__head:hover .group__gear,
+.group.is-active .group__gear {
+  opacity: 1;
+}
+
+.group__gear:hover {
+  background: var(--sn-hover);
+  color: var(--sn-ink);
+}
+
+.group__name {
+  flex: 1 1 auto;
+  min-width: 0; /* 没有它，flex 项不会缩到内容宽度以下，省略号永远不出现 */
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.group__count {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--sn-ink-soft);
+}
+
+.group__badges {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+  flex: none;
+}
+
+.badge {
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: var(--sn-surface-2);
+  color: var(--sn-ink-soft);
+  white-space: nowrap;
+}
+
+.badge--layer {
+  background: var(--sn-accent-soft);
+  color: var(--sn-accent-ink);
+}
+
+.badge--through {
+  background: #e4eaf1;
+  color: #46617f;
+}
+
+.group__members {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 4px;
+}
+
+/* 作者样式里的 display:flex 会盖掉 UA 的 [hidden]{display:none}，必须显式写一条。 */
+.group__members[hidden] {
+  display: none;
+}
+
+.group__empty {
+  padding: 2px 10px 8px;
+  font-size: 11.5px;
+  color: var(--sn-ink-soft);
+}
+
+/* --- 组件行 ------------------------------------------------------------- */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px 5px 10px;
+}
+
+.item:hover {
+  background: var(--sn-hover);
+}
+
+.item__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cfc9bd;
+}
+
+.item__dot[data-on="1"] {
+  background: var(--sn-ok);
+}
+
+.item__name {
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item.is-off .item__name {
+  color: var(--sn-ink-soft);
+}
+
+/* 没有实例的组件：留一行占位，让它的设置面板仍然点得进去。 */
+.item--empty .item__name {
+  color: var(--sn-ink-soft);
+  font-weight: 400;
+}
+
+.item--empty .btn {
+  height: 18px;
+  padding: 0 5px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.item__meta {
+  flex: none;
+  margin-left: auto;
+  padding-right: 2px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10px;
+  color: var(--sn-ink-soft);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   主区：桌面布局板
+   --------------------------------------------------------------------------- */
+
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px 9px;
+}
+
+.main__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.main__hint {
+  font-size: 11.5px;
+  color: var(--sn-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.main__size {
+  margin-left: auto;
+  flex: none;
+  font-size: 11px;
+  color: var(--sn-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 组图例：只在「全部组」视图出现，点一下切到那个组。
+   颜色是唯一的组标识，图例就是它的说明书。 */
+.main__legend {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 10px;
+}
+
+.main__legend[hidden] {
+  display: none;
+}
+
+.legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid var(--sn-line);
+  border-radius: 12px;
+  background: var(--sn-surface);
+  color: var(--sn-ink-soft);
+  font-size: 11.5px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.legend__item:hover {
+  background: var(--sn-surface-2);
+  color: var(--sn-ink);
+}
+
+.legend__item.is-empty {
+  opacity: 0.55;
+}
+
+.legend__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--g, #cfc9bd);
+}
+
+.legend__n {
+  font-size: 10.5px;
+  color: var(--sn-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.board-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+/* 板子按可用空间等比缩放，宽高由脚本按物理像素换算后写死。
+   绝对定位子元素的百分比高度在这里不可靠，方块尺寸也一并由脚本算。 */
+.board {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(130% 90% at 18% 0%, #eef3f8 0%, #e6e1d6 58%, #dbd5c7 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+/* 方块的边框与底色来自它所属组的识别色（--g / --g-soft 由脚本写在行内）。
+   这是布局板上"哪个方块属于哪个组"的唯一线索，所以边框给足饱和度。 */
+.box {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 2px 3px;
+  border: 1px solid var(--g, rgba(0, 0, 0, 0.16));
+  border-radius: 6px;
+  background: var(--g-soft, rgba(255, 255, 255, 0.9));
+  /* 手柄贴在方块边缘外侧，这里不能裁剪，否则一半手柄会消失。
+     标签自己的省略号靠 .box__label 的 overflow 兜住。 */
+  overflow: visible;
+  cursor: grab;
+}
+
+/* 边框手柄：拖它改窗口尺寸。八块拼起来正好是四条边 + 四个角，
+   命中区域比"在 mousedown 里算离边几像素"可靠——方块缩得很小时也不会误判。 */
+.grip {
+  position: absolute;
+  z-index: 2;
+  background: transparent;
+}
+
+.grip--n,
+.grip--s {
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.grip--n {
+  top: -3px;
+}
+.grip--s {
+  bottom: -3px;
+}
+
+.grip--w,
+.grip--e {
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.grip--w {
+  left: -3px;
+}
+.grip--e {
+  right: -3px;
+}
+
+.grip--nw,
+.grip--ne,
+.grip--sw,
+.grip--se {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.grip--nw {
+  top: -4px;
+  left: -4px;
+  cursor: nwse-resize;
+}
+.grip--se {
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+}
+.grip--ne {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+.grip--sw {
+  bottom: -4px;
+  left: -4px;
+  cursor: nesw-resize;
+}
+
+/* 悬停才把四角画出来：平时不打扰，鼠标一进来就知道哪里能抓。 */
+.box:hover .grip--nw,
+.box:hover .grip--ne,
+.box:hover .grip--sw,
+.box:hover .grip--se {
+  background: var(--g, var(--sn-accent));
+  opacity: 0.85;
+}
+
+.box__label {
+  max-width: 100%;
+  font-size: 10.5px;
+  color: var(--sn-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 没显示（隐藏或未运行）的方块：虚线 + 变淡，但保留组色，
+   否则"哪个组的窗口关着"就看不出来了。 */
+.box--off {
+  border-style: dashed;
+  opacity: 0.45;
+}
+
+.box--through {
+  border-style: dotted;
+}
+
+.box.is-dragging {
+  z-index: 5;
+  cursor: grabbing;
+  box-shadow: 0 0 0 2px var(--g, var(--sn-accent)), 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.box.is-resizing {
+  z-index: 6;
+  box-shadow: 0 0 0 2px var(--g, var(--sn-accent)), 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* 全部组视图是只读总览：位置只能进到某个组里改，避免"拖了但不知道改的是谁"。 */
+.board.is-readonly .box {
+  cursor: default;
+}
+
+.board.is-readonly .box:hover {
+  box-shadow: 0 0 0 2px var(--g, var(--sn-accent));
+}
+
+.main__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+  padding: 8px 16px 12px;
+  font-size: 11.5px;
+  color: var(--sn-ink-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   状态栏
+   --------------------------------------------------------------------------- */
+
+.statusbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding: 0 12px;
+  border-top: 1px solid var(--sn-line);
+  background: var(--sn-surface-2);
+  font-size: 11px;
+  color: var(--sn-ink-soft);
+}
+
+.statusbar__spacer {
+  flex: 1;
+}
+
+.statusbar__path {
+  max-width: 42%;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sn-accent-ink);
+  font-size: 11px;
+  cursor: default;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------------
+   按钮
+   --------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--sn-line);
+  border-radius: 6px;
+  background: var(--sn-surface);
+  color: var(--sn-ink);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.btn:hover {
+  background: var(--sn-surface-2);
+}
+
+.btn:disabled {
+  opacity: 0.42;
+}
+
+.btn:disabled:hover {
+  background: var(--sn-surface);
+}
+
+.btn--sm {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11.5px;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--sn-ink-soft);
+}
+
+.btn--ghost:hover {
+  background: var(--sn-hover);
+  color: var(--sn-ink);
+}
+
+.btn--primary {
+  border-color: var(--sn-accent);
+  background: var(--sn-accent);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: var(--sn-accent-dark);
+}
+
+.btn--danger {
+  border-color: rgba(196, 48, 43, 0.3);
+  background: transparent;
+  color: var(--sn-danger);
+}
+
+.btn--danger:hover {
+  background: rgba(196, 48, 43, 0.08);
+}
+
+.btn.is-on {
+  border-color: var(--sn-accent);
+  background: var(--sn-accent-soft);
+  color: var(--sn-accent-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   开关
+   --------------------------------------------------------------------------- */
+
+.switch {
+  position: relative;
+  flex: none;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  cursor: default;
+}
+
+.switch input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.switch__track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: #d8d2c6;
+  transition: background 0.14s ease;
+}
+
+.switch__track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  transition: transform 0.14s ease;
+}
+
+.switch input:checked + .switch__track {
+  background: var(--sn-accent);
+}
+
+.switch input:checked + .switch__track::after {
+  transform: translateX(14px);
+}
+
+.switch input:disabled + .switch__track {
+  opacity: 0.4;
+}
+
+/* ---------------------------------------------------------------------------
+   抽屉（组设置 / 组件设置）
+   --------------------------------------------------------------------------- */
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  width: 344px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--sn-line);
+  background: var(--sn-surface);
+  box-shadow: -14px 0 34px rgba(0, 0, 0, 0.14);
+  animation: drawer-in 0.16s ease-out;
+}
+
+/* 作者样式里的 display:flex 会盖掉 UA 的 [hidden]{display:none}，必须显式写一条。 */
+.drawer[hidden] {
+  display: none;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(22px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.drawer__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px 10px 16px;
+  border-bottom: 1px solid var(--sn-line);
+}
+
+.drawer__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.drawer__sub {
+  font-size: 10.5px;
+  color: var(--sn-ink-soft);
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.drawer__close {
+  margin-left: auto;
+}
+
+.drawer__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 16px 18px;
+  overflow-y: auto;
+}
+
+.drawer__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--sn-line);
+  background: var(--sn-surface-2);
+}
+
+/* --- 表单项 ------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--sn-ink-soft);
+}
+
+.field__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field__val {
+  min-width: 36px;
+  font-size: 11.5px;
+  color: var(--sn-ink-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.field__hint {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--sn-ink-soft);
+}
+
+.field--row {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.field--row .field__label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--sn-ink);
+}
+
+/* --- 三选一 ------------------------------------------------------------- */
+
+.seg {
+  display: flex;
+  border: 1px solid var(--sn-line);
+  border-radius: 7px;
+  background: var(--sn-surface-2);
+  overflow: hidden;
+}
+
+.seg__btn {
+  flex: 1;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+  cursor: default;
+}
+
+.seg__btn + .seg__btn {
+  border-left: 1px solid var(--sn-line);
+}
+
+.seg__btn.is-on {
+  background: var(--sn-surface);
+  color: var(--sn-ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+}
+
+/* --- 输入控件 ----------------------------------------------------------- */
+
+.input {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--sn-line);
+  border-radius: 6px;
+  background: var(--sn-surface);
+  color: var(--sn-ink);
+  font-size: 12.5px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--sn-accent);
+  box-shadow: 0 0 0 2px var(--sn-accent-soft);
+}
+
+select.input {
+  cursor: default;
+}
+
+/* --- 变量表单 ----------------------------------------------------------- */
+
+/* 长消息文本框：高度跟着内容走，用户能往下拉。
+   .input 定死了 28px 高，这里必须覆盖掉，否则多行内容只能挤在一行里。 */
+.input--area {
+  height: auto;
+  min-height: 76px;
+  padding: 6px 8px;
+  line-height: 1.55;
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* 变量区用一条虚线跟上文隔开：它填的是"这个窗口的配置"，
+   和上面"这个窗口归哪个组"不是同一类东西。 */
+.field--vars {
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--sn-line);
+}
+
+/* 列表变量的编辑框：一行一条，用等宽字体让对齐看得清（不做 JSON 编辑框了，
+   结构化是宿主的事，用户只写文字）。 */
+.input[data-list] {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+/* 记录表（group 变量）：一条记录一张卡片，字段自上而下排。
+   纵向是刻意的——每条记录有 2~5 个字段时，横排会把抽屉挤得没法看。 */
+.recs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec {
+  border: 1px solid var(--sn-line);
+  border-radius: 8px;
+  padding: 8px 10px 10px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.rec__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.rec__no {
+  flex: 1;
+  font-size: 11px;
+  color: var(--sn-ink-soft);
+}
+
+.rec__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.rec__label {
+  font-size: 11.5px;
+  color: var(--sn-ink-soft);
+}
+
+.rec__key {
+  margin-left: 6px;
+  font-size: 10.5px;
+  opacity: 0.55;
+}
+
+.rec__check {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0;
+  accent-color: var(--sn-accent);
+}
+
+/* 布尔变量的开关行：勾选框 + 一个"开/关"字，比裸复选框好认。 */
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--sn-ink);
+}
+
+.switch-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--sn-accent);
+}
+
+.field__warn {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--sn-danger);
+}
+
+/* "必填"角标与变量 key。key 用等宽字体，因为组件代码里写的就是它。 */
+.var__req {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--sn-accent-soft);
+  color: var(--sn-accent-ink);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.var__key {
+  margin-left: 6px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 9.5px;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
+/* 组件抽屉里的变量清单：只读，一眼看全"作者要什么"。 */
+.var-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.var-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.var-item__name {
+  color: var(--sn-ink);
+  white-space: nowrap;
+}
+
+.var-item__key {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10px;
+  color: var(--sn-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.var-item__type {
+  margin-left: auto;
+  flex: none;
+  font-size: 10px;
+  color: var(--sn-ink-soft);
+}
+
+input[type="range"] {
+  flex: 1;
+  height: 18px;
+  accent-color: var(--sn-accent);
+}
+
+input[type="color"] {
+  width: 36px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--sn-line);
+  border-radius: 6px;
+  background: var(--sn-surface);
+}
+
+/* --- 成员行 ------------------------------------------------------------- */
+
+.member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--sn-line);
+  border-radius: 7px;
+  background: var(--sn-surface);
+}
+
+.member__name {
+  font-size: 12.5px;
+}
+
+.member__id {
+  font-size: 10.5px;
+  font-family: Consolas, "Courier New", monospace;
+  color: var(--sn-ink-soft);
+}
+
+.member__acts {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+/* ---------------------------------------------------------------------------
+   空态与提示条
+   --------------------------------------------------------------------------- */
+
+.empty {
+  padding: 22px 14px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--sn-ink-soft);
+}
+
+.empty__title {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sn-ink);
+}
+
+.empty code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--sn-surface-2);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+}
+
+/* ---------------------------------------------------------------------------
+   确认框
+   --------------------------------------------------------------------------- */
+
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 40, 35, 0.28);
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal__box {
+  width: 322px;
+  padding: 18px 20px 14px;
+  border-radius: 10px;
+  background: var(--sn-surface);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.modal__title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal__text {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--sn-ink-soft);
+  white-space: pre-line;
+}
+
+.modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ---------------------------------------------------------------------------
+   提示条
+   --------------------------------------------------------------------------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 46px;
+  z-index: 40;
+  max-width: 70%;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(43, 40, 35, 0.94);
+  color: #f7f5f1;
+  font-size: 12px;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+.toast.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast[data-ok="0"] {
+  background: rgba(196, 48, 43, 0.96);
+}
+
+/* ---------------------------------------------------------------------------
+   滚动条
+   --------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background-clip: content-box;
+  background-color: rgba(0, 0, 0, 0.16);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.28);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   侧边栏：视角切换（组 / 组件）
+   --------------------------------------------------------------------------- */
+
+/* 两个视角看的是同一批实例：组按窗口形态归类，组件按来源归类。 */
+.seg--tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.seg--tabs .seg__btn {
+  height: 24px;
+  font-size: 11.5px;
+}
+
+/* 「新建组」只在组视角出现。作者样式里的 display 会盖掉 UA 的 [hidden]。 */
+.sidebar__head .btn[hidden] {
+  display: none;
+}
+
+/* 组头右侧的两个操作（放进组件 / 组设置）：hover 才出现，平时不占视觉。 */
+.group__acts {
+  flex: none;
+  display: flex;
+  gap: 2px;
+}
+
+.group__add {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  font-size: 13px;
+  line-height: 1;
+  cursor: default;
+  opacity: 0;
+}
+
+.group__head:hover .group__add,
+.group.is-active .group__add {
+  opacity: 1;
+}
+
+.group__add:hover {
+  background: var(--sn-hover);
+  color: var(--sn-ink);
+}
+
+/* --- 组件卡片（组件视角） ------------------------------------------------ */
+
+.comp {
+  flex: none;
+  border: 1px solid var(--sn-line);
+  border-radius: 8px;
+  background: var(--sn-surface);
+  overflow: hidden;
+}
+
+/* 停用的组件：整张卡淡下去。它名下的实例一个都不会有窗口。 */
+.comp.is-off {
+  opacity: 0.66;
+}
+
+.comp__head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 4px 7px 6px;
+}
+
+.comp__head:hover {
+  background: var(--sn-hover);
+}
+
+.comp__head:hover .group__gear {
+  opacity: 1;
+}
+
+.comp__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- 实例行右侧的组下拉 ------------------------------------------------ */
+
+/* 组件视角里每行都要能改"这个窗口属于哪个组"。宽度压到刚好放得下两三个字，
+   再长就靠 title 提示——侧边栏只有 268px。 */
+.item__group {
+  flex: none;
+  max-width: 104px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 2px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  font-family: inherit;
+  font-size: 10.5px;
+  cursor: default;
+}
+
+.item__group:hover {
+  border-color: var(--sn-line);
+  background: var(--sn-surface);
+  color: var(--sn-ink);
+}
+
+/* --- 抽屉里的实例行 ---------------------------------------------------- */
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+/* 一行里塞了"组下拉 + 隐藏 + 关闭"，344px 的抽屉放不下，允许折行。 */
+.member {
+  flex-wrap: wrap;
+}
+
+.member__id {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member__acts {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* 组标签：小色点 + 组名，和侧边栏的组色对得上。 */
+.member__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--sn-ink-soft);
+  white-space: nowrap;
+}
+
+.member__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--g, #cfc9bd);
+}
+
+.input--sm {
+  width: auto;
+  max-width: 104px;
+  height: 24px;
+  padding: 0 4px;
+  font-size: 11.5px;
+}
+
+/* --- 选组件（往组里新建实例） ------------------------------------------ */
+
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pick {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--sn-line);
+  border-radius: 8px;
+  background: var(--sn-surface);
+  color: var(--sn-ink);
+  font-family: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.pick:hover {
+  border-color: var(--sn-accent);
+  background: var(--sn-hover);
+}
+
+.pick:disabled {
+  opacity: 0.5;
+}
+
+.pick:disabled:hover {
+  border-color: var(--sn-line);
+  background: var(--sn-surface);
+}
+
+.pick__name {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pick__id {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 10px;
+  color: var(--sn-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick__meta {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--sn-ink-soft);
+  white-space: nowrap;
+}

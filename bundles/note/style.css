@@ -1,0 +1,190 @@
+/* ---------------------------------------------------------------------------
+   便签组件样式
+   颜色、留白、圆角全部来自宿主注入的 --sn-* 变量：
+   L1 样式包改这些变量就能换掉窗口外观，组件内部布局由本文件自己决定。
+
+   【重写说明】按 cmd/cssprobe 的实测结论重写：
+   - 父级 align-items 不生效，垂直居中一律写在子元素上（align-self:center）；
+   - inset 简写、translateX()/translateY() 都不生效，绝对定位写四向、
+     位移用 translate(x,y)。
+   盒模型与 html/body 的基础尺寸由内核基座样式提供，这里不重复。
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* 兜底值：样式没给时的样子，保证组件单独打开也不至于难看 */
+  --sn-paper: #fffbf0;
+  --sn-paper-deep: #fdf3dc;
+  --sn-ink: #2e2a22;
+  --sn-ink-soft: #8a8170;
+  --sn-accent: #c99700;
+  --sn-line: rgba(0, 0, 0, 0.08);
+  --sn-hover: rgba(0, 0, 0, 0.06);
+  --sn-danger: #e81123;
+  --sn-padding: 18px;
+  --sn-radius: 12px;
+  --sn-background: #fffbf0;
+  --sn-shadow: none;
+  --sn-titlebar-h: 32px;
+}
+
+body {
+  font-family: "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
+  /* 底色不画在 body 上：html 透明时 body 的背景会传播到画布，
+     border-radius 就管不住它了（画布是方的）。改成画在 .note 上。 */
+  background: transparent;
+  color: var(--sn-ink);
+  overflow: hidden;
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* 不透明纸面 + 圆角：窗口自己不加圆角、也不加投影（见 WindowOptions.Shadow），
+     形状完全由这里决定，圆角外面露出的是桌面。 */
+  background: var(--sn-background);
+  border-radius: var(--sn-radius);
+  /* 让标题栏被裁进圆角里，否则它会把上面两个角顶成直角。 */
+  overflow: hidden;
+}
+
+/* 样式声明 titlebar=false 时，宿主会把 data-sn-titlebar 置为 0。
+   组件的内部结构由组件自己响应这个契约。 */
+html[data-sn-titlebar="0"] .titlebar {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   自绘标题栏
+   拖动不是 CSS 实现的：app.js 在 mousedown 时通知宿主，
+   宿主伪造一次"标题栏左键按下"，交给系统的模态移动循环。
+   --------------------------------------------------------------------------- */
+
+.titlebar {
+  display: flex;
+  gap: 7px;
+  flex: 0 0 var(--sn-titlebar-h);
+  height: var(--sn-titlebar-h);
+  padding: 0 4px 0 12px;
+  border-bottom: 1px solid var(--sn-line);
+  background: var(--sn-paper-deep);
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+  user-select: none;
+  cursor: default;
+}
+
+/* 垂直居中写在子元素上：标题栏是 flex 行，逐个 align-self 最直观。 */
+.titlebar > *,
+.titlebar__actions > * {
+  align-self: center;
+}
+
+.titlebar__dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sn-ink-soft);
+  opacity: 0.45;
+}
+
+.titlebar__dot[data-state="busy"] {
+  background: var(--sn-accent);
+  opacity: 1;
+}
+
+.titlebar__dot[data-state="error"] {
+  background: var(--sn-danger);
+  opacity: 1;
+}
+
+.titlebar__brand {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  color: var(--sn-ink);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.titlebar__status {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.titlebar__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 1px;
+}
+
+.tb-btn {
+  display: flex;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sn-ink-soft);
+  cursor: pointer;
+}
+
+.tb-btn svg {
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tb-btn:hover {
+  background: var(--sn-hover);
+  color: var(--sn-ink);
+}
+
+.tb-btn:active {
+  background: var(--sn-hover);
+}
+
+/* 置顶开关：按下态用强调色，一眼能看出当前是否置顶。 */
+.tb-btn.is-on {
+  color: var(--sn-accent);
+}
+
+.tb-btn--close:hover {
+  background: var(--sn-danger);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------------------
+   编辑区
+   --------------------------------------------------------------------------- */
+
+.note__editor {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: var(--sn-padding);
+  border: 0;
+  outline: 0;
+  resize: none;
+  /* 只在需要时出滚动条：空便签上常驻一条很显眼。 */
+  overflow-y: auto;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  caret-color: var(--sn-accent);
+}
+
+/* 占位文字用默认颜色，不单独着色：它只是提示，不该抢正文的注意力。 */
+

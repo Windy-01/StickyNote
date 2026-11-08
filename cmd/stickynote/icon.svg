@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="便签">
+  <title>便签</title>
+  <defs>
+    <linearGradient id="paper" x1="0.12" y1="0" x2="0.88" y2="1">
+      <stop offset="0" stop-color="#FFE08A"/>
+      <stop offset="0.55" stop-color="#F7C33F"/>
+      <stop offset="1" stop-color="#E9A81C"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#FFFBE8"/>
+      <stop offset="1" stop-color="#FFE7A0"/>
+    </linearGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8A6415"/>
+      <stop offset="1" stop-color="#6E4E0C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 便签主体：右下角沿对角线切掉，留出折角的位置 -->
+  <path d="M56 16h144a24 24 0 0 1 24 24v140l-64 64H56a24 24 0 0 1-24-24V40a24 24 0 0 1 24-24z"
+        fill="url(#paper)"/>
+
+  <!-- 折角：被翻折下来的纸背，顶点是切口三角形的镜像点 -->
+  <path d="M224 180L160 244V180z" fill="url(#fold)"/>
+
+  <!-- 折痕：一条比纸背略深的细线，让小尺寸下也能看出是折角而不是缺角 -->
+  <path d="M224 180L160 244" stroke="#D99A12" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+
+  <!-- 正文：三条粗细一致的行，16px 下退化成三道横杠仍然可辨 -->
+  <g fill="url(#ink)" opacity="0.62">
+    <rect x="62" y="72" width="132" height="18" rx="9"/>
+    <rect x="62" y="110" width="132" height="18" rx="9"/>
+    <rect x="62" y="148" width="76" height="18" rx="9"/>
+  </g>
+</svg>

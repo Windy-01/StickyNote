@@ -1,0 +1,93 @@
+/* ---------------------------------------------------------------------------
+   数字时钟
+   颜色、留白、圆角全部来自宿主注入的 --sn-* 变量——这里一行都不写死配色，
+   换一个 L1 样式包就能整体换皮。
+
+   【重写说明】按 cmd/cssprobe 的实测结论重写：
+   - display:grid / place-items 不在支持范围内，改用 flex + 自动外边距；
+   - 父级 align-items 不生效（包括 baseline），对齐一律写在子元素上。
+   盒模型与 html/body 的基础尺寸由内核基座样式提供。
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* 兜底值：单独在浏览器里打开时的样子 */
+  --sn-ink: #f2f2f7;
+  --sn-ink-soft: #9a9aa2;
+  --sn-accent: #7fd1ff;
+  --sn-padding: 12px;
+  --sn-radius: 16px;
+  /* 桌面摆件的底色是 transparent（透出壁纸），这里保持一致；
+     单独在浏览器里打开时也不会多出一块黑底。 */
+  --sn-background: transparent;
+  --sn-shadow: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  /* 底色来自样式包，现在是 transparent——直接透出壁纸。
+     本样式 radius=0，所以画在 body 上不会有圆角问题；
+     真要圆角，得像便签那样把底色画到内层元素上。 */
+  background: var(--sn-background);
+  color: var(--sn-ink);
+  font-family: "Segoe UI Variable Display", "Segoe UI", "Microsoft YaHei UI",
+    system-ui, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  /* 没有光标可设：窗口是点击穿透的（layer=desktop），鼠标根本进不来。
+     位置在管理界面的「布局」页拖。 */
+}
+
+/* 居中方式：主轴（纵向）用上下 auto 外边距——自动外边距在主轴上是有效的
+   （实测）；交叉轴（横向）用 align-self。align-items / justify-content
+   在 column 方向都不可靠。 */
+.clock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-self: center;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: var(--sn-padding);
+  text-align: center;
+}
+
+.clock__time {
+  display: flex;
+  align-self: center;
+  /* 等宽数字：否则秒数跳动时整行会左右抖。 */
+  font-variant-numeric: tabular-nums;
+}
+
+/* 秒数与主时间的对齐：两者都是 line-height:1，底部对齐就能落在同一线上。
+   不用 align-items:baseline——不同字号的基线偏移在这里没必要较真。 */
+.clock__hm,
+.clock__sec {
+  align-self: flex-end;
+}
+
+.clock__hm {
+  font-size: 46px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.clock__sec {
+  margin-left: 2px;
+  color: var(--sn-accent);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.clock__date {
+  align-self: center;
+  color: var(--sn-ink-soft);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* 注：时钟窗口 resizable=false、高度由样式钉死，不需要 @media (max-height:…) 兜底。 */

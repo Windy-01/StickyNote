@@ -1,0 +1,44 @@
+{
+  "id": "danmaku",
+  "name": "测试弹幕",
+  "entry": "index.html",
+  "author": "stickynote",
+  "description": "一行测试文字贴屏幕顶部从右向左循环滚动。外观与窗口行为由它所在的组决定。",
+  "permissions": [],
+  "defaultBounds": { "width": 1000, "height": 56 },
+  "minBounds": { "width": 320, "height": 40 },
+  "singleton": true,
+  "variables": [
+    {
+      "key": "text",
+      "label": "弹幕文字",
+      "type": "textarea",
+      "default": "这是一条测试弹幕 · 组件宿主运行正常 · 便签、数字时钟、测试弹幕 三个插件都在工作",
+      "rows": 3,
+      "description": "会从右向左循环滚动。换行会被压平成一行——滚动轨道里放不下多行。"
+    },
+    {
+      "key": "speed",
+      "label": "滚动速度",
+      "type": "select",
+      "default": "normal",
+      "options": [
+        { "value": "slow", "label": "慢（28 秒滚一遍）" },
+        { "value": "normal", "label": "中（18 秒滚一遍）" },
+        { "value": "fast", "label": "快（10 秒滚一遍）" }
+      ],
+      "description": "一份文字从右边进、滚完整屏所用的时间。"
+    },
+    {
+      "key": "lines",
+      "label": "多行弹幕",
+      "type": "list",
+      "item": "text",
+      "default": [],
+      "rows": 6,
+      "description": "一行一条，每条单独滚一遍（多行文本框，不用写 JSON）。非空时优先于上面的「弹幕文字」。"
+    }
+  ],
+  "visual": {},
+  "cssVars": {}
+}

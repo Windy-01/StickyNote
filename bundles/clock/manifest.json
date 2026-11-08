@@ -1,0 +1,13 @@
+{
+  "id": "clock",
+  "name": "数字时钟",
+  "entry": "index.html",
+  "author": "stickynote",
+  "description": "贴在桌面图标之上、被任何应用窗口覆盖、Win+D 时跟着桌面显隐的数字时钟。外观与窗口行为由它所在的组决定，位置在管理界面右侧的布局板里拖。",
+  "permissions": [],
+  "defaultBounds": { "width": 280, "height": 120 },
+  "minBounds": { "width": 180, "height": 80 },
+  "singleton": true,
+  "visual": {},
+  "cssVars": {}
+}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StickyNote</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+  <!-- 标题栏：拖动由 app.js 通知宿主，宿主伪造 WM_NCLBUTTONDOWN 交给系统 -->
+  <header class="titlebar" id="titlebar">
+    <span class="titlebar__mark" aria-hidden="true"></span>
+    <span class="titlebar__title">StickyNote</span>
+    <span class="titlebar__hint">组件宿主</span>
+    <div class="titlebar__actions">
+      <button type="button" class="tb-btn" id="minimize" title="最小化">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5h8"/></svg>
+      </button>
+      <button type="button" class="tb-btn tb-btn--close" id="close" title="关闭">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="body">
+    <!-- 左：侧边栏。两个视角看同一批窗口：
+         「组」按窗口形态归类（组决定外观与层级），「组件」按来源归类（谁提供了这些窗口）。
+         实例是真正的管理单位——一行一个窗口。 -->
+    <aside class="sidebar">
+      <div class="sidebar__head">
+        <div class="seg seg--tabs" id="sideTabs">
+          <button type="button" class="seg__btn is-on" data-act="sideTab" data-tab="groups">组</button>
+          <button type="button" class="seg__btn" data-act="sideTab" data-tab="components">组件</button>
+        </div>
+        <button type="button" class="btn btn--ghost btn--sm" id="newGroup" title="新建组">+</button>
+      </div>
+      <div class="sidebar__list" id="groupList"></div>
+      <div class="sidebar__foot">
+        <button type="button" class="btn btn--primary btn--block" id="install">安装组件…</button>
+        <button type="button" class="btn btn--ghost btn--block" id="reload">重新扫描</button>
+      </div>
+    </aside>
+
+    <!-- 右：桌面布局板（主页面）。范围要么是"全部组"（只读总览），
+         要么是某一个组（只有它的方块，可以拖动） -->
+    <main class="main">
+      <div class="main__head">
+        <span class="main__title" id="boardTitle">全部组</span>
+        <span class="main__hint" id="boardHint"></span>
+        <button type="button" class="btn btn--ghost btn--sm" id="showAll" hidden>显示全部</button>
+        <span class="main__size" id="screenSize"></span>
+      </div>
+      <div class="main__legend" id="legend"></div>
+      <div class="board-wrap" id="boardWrap">
+        <div class="board" id="board"></div>
+      </div>
+      <div class="main__foot" id="boardFoot"></div>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <span id="status">正在连接宿主…</span>
+    <span class="statusbar__spacer"></span>
+    <span class="statusbar__path" id="paths"></span>
+    <button type="button" class="link" id="openPlugins">打开插件目录</button>
+  </footer>
+</div>
+
+<!-- 右侧抽屉：组设置 / 组件设置 -->
+<aside class="drawer" id="drawer" hidden></aside>
+
+<!-- 确认框自己画：window.confirm 要宿主接管 ScriptDialogOpening 才会出现，
+     没接管时不同 WebView2 版本行为不一致（有的直接返回 false，有的卡住）。 -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__box">
+    <div class="modal__title" id="modalTitle"></div>
+    <div class="modal__text" id="modalText"></div>
+    <div class="modal__foot">
+      <button type="button" class="btn btn--sm" id="modalCancel">取消</button>
+      <button type="button" class="btn btn--sm btn--danger" id="modalOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "id": "note",
+  "name": "便签",
+  "entry": "index.html",
+  "author": "stickynote",
+  "description": "边写边存的文字便签。外观与窗口行为由它所在的组决定。",
+  "permissions": ["storage", "window.drag", "window.resize"],
+  "defaultBounds": { "width": 420, "height": 360 },
+  "minBounds": { "width": 260, "height": 200 },
+  "singleton": false,
+  "variables": [
+    {
+      "key": "title",
+      "label": "标题",
+      "type": "text",
+      "default": "便签",
+      "placeholder": "顶栏显示的名字",
+      "description": "留空就用组件名。不同实例可以写不同的标题。"
+    },
+    {
+      "key": "fontSize",
+      "label": "正文字号",
+      "type": "select",
+      "default": "m",
+      "options": [
+        { "value": "s", "label": "小 13px" },
+        { "value": "m", "label": "中 15px" },
+        { "value": "l", "label": "大 18px" },
+        { "value": "xl", "label": "特大 22px" }
+      ],
+      "description": "一个便签用大字、另一个用小字——这正是变量按实例存的意义。"
+    }
+  ],
+  "visual": {},
+  "cssVars": {}
+}

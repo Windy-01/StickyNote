@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>测试弹幕</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- 要滚动的那行字就在这里改。app.js 会把它复制一份，用来做无缝循环。 -->
+<div class="danmaku" id="danmaku">
+  <div class="danmaku__track" id="track">
+    <span class="danmaku__item" id="item">这是一条测试弹幕 · 组件宿主运行正常 · 便签、数字时钟、测试弹幕 三个插件都在工作 · </span>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

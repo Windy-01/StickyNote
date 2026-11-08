@@ -13,15 +13,21 @@ bin/
 Thumbs.db
 desktop.ini
 
-# 实验探针（experiments/）只留源码：
-#   sdk/     = 解包出来的 WebView2 SDK（与 third_party/webview2 重复，20M+）
-#   wv2data/ = WebView2 运行时缓存（浏览器 profile，会自己长）
-#   *.nupkg / *.o / 复制进来的 Loader.dll = 下载与编译中间产物
-experiments/*/sdk/
-experiments/*/wv2data/
-experiments/*/*.nupkg
-experiments/*/*.o
-experiments/*/WebView2Loader.dll
+# 以下内容留在磁盘、不进仓库：它们都不是编译或运行本体的一部分。
+# 想改回来只需把对应行删掉再 git add。
+
+# 设计文档
+docs/
+
+# 开发期探针（DComp / WebView2 验证程序，含 SDK、nupkg 与运行时缓存）
+experiments/
+
+# 开发期诊断工具
+cmd/shot/
+cmd/winprobe/
+
+# AI 协作记忆（.workbuddy-ai 目录本身必须保留在磁盘，只是不进仓库）
+.workbuddy-ai/
 
 # 历史备份（重建成 v0.1 之前的完整 git bundle）
 .git-backup/

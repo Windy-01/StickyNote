@@ -1,3 +1,7 @@
 * text=auto
 *.bat text eol=crlf
 *.go text eol=lf
+
+# 第三方许可证原文按字节保存：不做行尾转换，保证与上游 nupkg 里的文件逐字节一致
+third_party/webview2/LICENSE     -text
+third_party/webview2/NOTICE.txt  -text

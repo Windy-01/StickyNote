@@ -37,4 +37,13 @@ if exist bundles (
     )
 )
 
-echo 已构建 bin\StickyNote.exe、bin\WebView2Loader.dll 与 bin\bundles\
+rem 许可证与第三方声明：MIT 要求随副本附带本声明，两份 BSD-3 要求在二进制分发的
+rem 文档/材料里重现版权声明与免责条款。漏了不影响运行，但不合规。
+copy /y LICENSE bin\LICENSE >nul
+if errorlevel 1 echo 警告：复制 LICENSE 失败，分发前请手动补上
+copy /y THIRD-PARTY-NOTICES.md bin\THIRD-PARTY-NOTICES.md >nul
+if errorlevel 1 echo 警告：复制 THIRD-PARTY-NOTICES.md 失败
+copy /y third_party\webview2\LICENSE bin\WebView2-SDK-LICENSE.txt >nul
+if errorlevel 1 echo 警告：复制 WebView2 SDK LICENSE 失败
+
+echo 已构建 bin\StickyNote.exe、bin\WebView2Loader.dll、bin\bundles\ 与许可证文件
